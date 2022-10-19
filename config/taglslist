@@ -1,0 +1,314 @@
+#!/bin/bash
+
+kernel_files_exclude_keys="
+9p
+aacraid
+accessibility
+acpi
+adfs
+affs
+afs
+agp
+aha1
+aic7xxx
+aic94xx
+alpha
+apple
+android
+arm
+atm
+auxdisplay
+be2iscsi
+befs
+berlin
+bfa
+bluetooth
+bnx2
+btrfs
+cachefiles
+cdrom
+cifs
+coda
+configfs
+cramfs
+crypto
+csiostor
+davinci
+devpts
+display
+drivers/amba
+drivers/bcma
+drivers/connector
+drivers/dca
+drivers/edac
+drivers/eisa
+drivers/extcon
+drivers/fmc
+drivers/fsi
+drivers/gnss
+drivers/hid
+drivers/hsi
+drivers/i2c
+drivers/i3c
+drivers/iio
+drivers/input
+drivers/ipack
+drivers/isdn
+drivers/leds
+drivers/mcb
+drivers/md
+drivers/media
+drivers/message
+drivers/mfd
+drivers/mmc
+drivers/mtd
+drivers/mux
+drivers/net/ethernet
+drivers/ntb
+drivers/nubus
+drivers/of
+drivers/opp
+drivers/phy
+drivers/pinctrl
+drivers/pnp
+drivers/power
+drivers/powercap
+drivers/pps
+drivers/ps3
+drivers/ptp
+drivers/pwm
+drivers/rapidio
+drivers/regulator
+drivers/remoteproc
+drivers/rpmsg
+drivers/sbus
+drivers/sfi
+drivers/sh
+drivers/siox
+drivers/slimbus
+drivers/sn
+drivers/spi
+drivers/spmi
+drivers/ssb
+drivers/tc
+drivers/tee
+drivers/thermal
+drivers/tty
+drivers/uwb
+drivers/visorbus
+drivers/vlynq
+drivers/vme
+drivers/w1
+drivers/zorro
+ecryptfs
+efivarfs
+efs
+exofs
+exportfs
+f2fs
+habanalabs
+fat
+fddi
+firewire
+firmware
+fnic
+fpga
+freevxfs
+fs/bfs
+fs/dlm
+generated
+gfs2
+git
+gpu
+hamradio
+hfs
+hfsplus
+hisilicon
+hpfs
+hwmon
+irda
+include/config
+infiniband
+input
+isofs
+jffs2
+jfs
+lguest
+libfc
+lpfc
+macintosh
+mailbox
+media
+memstick
+meson
+mod.c
+minix
+mips
+mwave
+mvebu
+nfc
+nfsd
+nilfs2
+nls
+ocfs2
+olpc
+omfs
+openpromfs
+orangefs
+parisc
+parport
+pcmcia
+pm8001
+powerpc
+pstore
+qla2xxx
+qla4xxx
+qnx4
+qnx6
+realmode
+reiserfs
+renesas
+rockchip
+romfs
+rsxxxsamsung
+s390
+samsung
+sgi-gru
+sgi-xp
+soc
+sound
+soundwire
+sparc
+spear
+staging
+sunxi
+sym53c
+sysv
+tegra
+testing
+tpm
+ubifs
+udf
+ufs
+usb
+ux500
+versatile
+video
+wan
+wireless
+wimax
+xen
+xilinx
+"
+
+qemu_files_exclude_keys="
+9pfs
+aarch
+alpha
+arm
+audio
+bios
+bsd
+capstone
+contrib
+cris
+crypto
+display
+git
+gpio
+hppa
+hw/sd
+i2c
+ipack
+libdecnumber
+libfdt
+lm32
+m68k
+microblaze
+mips
+moxie
+nios2
+openrisc
+pcmcia
+pixman
+powerpc
+pm8001
+ppc
+qga
+rom
+s390
+script
+sh4
+sparc
+stub
+tilegx
+tcg
+test
+tpm
+tricore
+ui
+unicore32
+usb
+win
+xen
+xtensa
+"
+
+function listkernel()
+{
+    prune_params="$(for key in $(echo $kernel_files_exclude_keys | sed 's/\//\\\//g');do echo -n '-path "*'$key'*" -o ';done)"
+    prune_params="$(echo $prune_params | cut -c 1-$(expr ${#prune_params} - 3))"
+
+    bash -c "find arch/x86 block Documentation drivers fs include init ipc kernel lib mm net tools usr virt ${prune_params} -prune -o -type f -name \"*.[c,h,txt,S]\" -print | sort | uniq -i"
+}
+
+function listqemu()
+{
+    prune_params="$(for key in $(echo $qemu_files_exclude_keys | sed 's/\//\\\//g');do echo -n '-path "*'$key'*" -o ';done)"
+    prune_params="$(echo $prune_params | cut -c 1-$(expr ${#prune_params} - 3))"
+
+    bash -c "find . ${prune_params} -prune -o -type f -name \"*.[c,h,txt,S]\" -print  | sort | uniq -i"
+}
+
+function listother()
+{
+    if [ -d ".git" ];then
+        git ls-files
+    else
+        find . -type f -name "*.[c,h,txt,s,S,go,py,sh,vim,cpp,cc]"
+    fi
+}
+
+function get_project_type()
+{
+    if [ -d "kernel" -a -d 'arch' -a -d 'virt' -a -d 'net' ];then
+        echo kernel
+        return
+    fi
+
+    if [ -d "accel" -a -d "tcg" -a -d "qapi" ];then
+        echo qemu
+        return
+    fi
+
+    echo other
+}
+
+function taglistraw()
+{
+    if [ -z "$1" ];then
+        root="."
+    else
+        root="$1"
+    fi
+
+    pushd "${root}" > /dev/null
+
+    project_type="$(get_project_type)"
+    eval "list${project_type}"
+
+    popd > /dev/null
+}
+
+taglistraw $@
+exit $?
