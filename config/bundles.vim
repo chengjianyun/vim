@@ -100,5 +100,6 @@ Plug 'skywind3000/asyncrun.vim'
 """""""""""""""""""""""""""""""""""""""""""""""""
 Plug 'altercation/vim-colors-solarized'
 Plug 'crusoexia/vim-monokai'
+Plug 'morhetz/gruvbox'
 
 call plug#end()

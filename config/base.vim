@@ -45,8 +45,9 @@ syntax enable
 set t_Co=256
 
 " color scheme
+autocmd vimenter * ++nested colorscheme gruvbox
 set background=dark
-colorscheme desert
+"colorscheme desert
 "colorscheme solarized
 "colorscheme monokai
 
